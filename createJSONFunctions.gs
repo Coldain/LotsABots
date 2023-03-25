@@ -1,7 +1,8 @@
-function buildJSON(sheetName, row) {
-  Logger.log(`buildJSON - sheetName: ${sheetName}, row: ${row}`);
+function buildJSON(sheet, row) {
+  //example data
+  // sheet = SpreadsheetApp.getActive().getSheetByName("Users"), row=4
+  Logger.log(`buildJSON - sheet: ${sheet}, row: ${row}`);
   const idColumn = "H";
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheetName);
   const lastColumn = sheet.getLastColumn();
   Logger.log(`buildJSON - lastColumn: ${lastColumn}`);
   
@@ -15,38 +16,72 @@ function buildJSON(sheetName, row) {
   Logger.log(`buildJSON - descriptions: ${JSON.stringify(descriptions)}`);
   Logger.log(`buildJSON - values: ${JSON.stringify(values)}`);
 
+  // Read the list of keys from C1
+  const fullObj = createFullObject(headers, values);
+
+  return fullObj;
+
+  // let jsonWithComments = "{\n";
+
+  // for (const [index, header] of headers.entries()) {
+  //   const key = header.toLowerCase();
+  //   const value = obj[key];
+  //   const description = descriptions[index];
+
+  //   jsonWithComments += `  ${header}: ${
+  //     typeof value === "string" ? `"${value.replace(/"/g, '\\"')}"` : value
+  //   }, // ${description}\n`;
+  // }
+
+  // jsonWithComments += "}";
+
+
+  // jsonWithComments += "}";
+
+  // Logger.log(`buildJSON - jsonWithComments: ${jsonWithComments}`);
+  // return jsonWithComments;
+}
+
+function createFullObject(headers, values) {
   const obj = {};
 
   for (let i = 0; i < headers.length; i++) {
     const header = headers[i].toLowerCase();
     const value = values[i];
 
-    if (header.includes("json")) {
-      const key = header.replace("json", "");
+    if (header.toLowerCase().includes("json")) {
+      const key = header.replace(/json/i, "JSON");
+      Logger.log(`${key} - value: ${value}`);
       const sanitizedValue = value.replace(/([^\\])'/g, "$1\"").replace(/,\s*$/, ""); // Remove trailing comma
-      obj[key] = JSON.parse(sanitizedValue);
+      Logger.log(`${key} - sanitizedValue: ${sanitizedValue}`);
+      try {
+        obj[header.replace(/json/i, "JSON")] = parseJsonWithComments(sanitizedValue);
+      } catch (error) {
+        Logger.log(`Unable to parse JSON value for key "${key}": ${sanitizedValue}`);
+        obj[key] = null;
+      }
     } else {
       obj[header] = value;
     }
   }
+  return obj;
+}
 
-  let jsonWithComments = "{\n";
+function createReducedObject(fullObj, keyList) {
+  const reducedObj = {};
 
-  for (const [index, header] of headers.entries()) {
-    const key = header.toLowerCase();
-    const value = obj[key];
-    const description = descriptions[index];
-
-    jsonWithComments += `  ${key}: ${
-      typeof value === "string" ? `"${value}"` : value
-    }, // ${description}\n`;
+  for (const key of keyList) {
+    const lowerCaseKey = key.toLowerCase();
+    if (lowerCaseKey in fullObj) {
+      reducedObj[lowerCaseKey] = fullObj[lowerCaseKey];
+    }
   }
 
-  jsonWithComments += "}";
-
-  Logger.log(`buildJSON - jsonWithComments: ${jsonWithComments}`);
-  return jsonWithComments;
+  return reducedObj;
 }
+
+
+
 
 function onEdit(e) {
   Logger.log(e);
@@ -56,6 +91,38 @@ function onEdit(e) {
   Logger.log(`sheet: ${sheet}`);
   const changedRange = e.range;
   Logger.log(`changedRange: ${changedRange}`);
+  if (changedRange.getRow() === 1 && changedRange.getColumn() === 3) {
+    keyFilterChanged(sheet);
+  } else {
+    dataChanged(sheet, changedRange,e);
+  }
+}
+
+function keyFilterChanged(sheet) {
+  //example data
+  sheet = SpreadsheetApp.getActive().getSheetByName("Users")
+  const keyList = sheet.getRange("C1").getValue().split("|");
+  const data = sheet.getRange("B3:H" + sheet.getLastRow()).getValues();
+
+  const reducedObjects = data.map(row => {
+    if (row[6]) { // Check if the H column has a value
+      const fullObj = JSON.parse(row[0]);
+      const reducedObj = createReducedObject(fullObj, keyList);
+      return [JSON.stringify(reducedObj, null, 5)];
+    } else {
+      return [""];
+    }
+  });
+
+  sheet.getRange(3, 3, reducedObjects.length, 1).setValues(reducedObjects);
+}
+
+
+
+function dataChanged(sheet,changedRange){
+  //example data
+  // sheet = SpreadsheetApp.getActive().getSheetByName("Users")
+  // changedRange = sheet.getRange("I4")
   const startingColumn = 8; // Where the actual data ends
   const dataRow = 3; // Where the actual data starts
   Logger.log(`startingColumn: ${startingColumn}`);
@@ -73,14 +140,14 @@ function onEdit(e) {
     for (let r = 0; r < numRows; r++) {
       const row = changedRange.getRow() + r;
       Logger.log(`Checking row: ${row}`);
-      if (row > dataRow) {
+      if (row >= dataRow) {
         for (let c = 0; c < numColumns; c++) {
           const column = changedRange.getColumn() + c;
           const newValue = sheet.getRange(row, column).getValue();
           const oldValueKey = `row_${row}_column_${column}_oldValue`;
           const oldValue = scriptProperties.getProperty(oldValueKey);
 
-          if (newValue.toString() !== oldValue) {
+          if (newValue.toString() !== "banana") { //oldValue
             scriptProperties.setProperty(oldValueKey, newValue.toString());
             updatedRows.add(row);
           }
@@ -96,30 +163,42 @@ function onEdit(e) {
       const idValue = sheet.getRange(row, startingColumn).getValue();
       Logger.log(`idValue: ${idValue}`);
       if (idValue) {
-        const jsonWithComments = buildJSON(sheetName, row);
-        Logger.log(`jsonWithComments: ${jsonWithComments}`);
-        sheet.getRange("B" + row).setValue(jsonWithComments);
+        const fullObj = buildJSON(sheet, row);
+        const keyList = ["id", "name", "icon", "status"]; // Update this with your actual key list
+        const reducedObj = createReducedObject(fullObj, keyList);
 
-        // Update modified date and modified by
-        sheet.getRange(row, 4).setValue(new Date());
-        sheet.getRange(row, 5).setValue(userEmail);
+        Logger.log(`fullObj: ${fullObj}`);
+        Logger.log(`reducedObj: ${reducedObj}`);
 
-        // Update created by date and created by if they are blank
-        if (!sheet.getRange(row, 6).getValue()) {
-          sheet.getRange(row, 6).setValue(new Date());
+        const now = new Date();
+        const createdDate = sheet.getRange(row, 6).getValue() || now;
+        const createdBy = sheet.getRange(row, 7).getValue() || userEmail;
+
+        if (idValue) {
+          // Set values in columns B, C, D, E, F, and G at once
+          sheet.getRange(row, 2, 1, 6).setValues([
+            [JSON.stringify(fullObj,null,2), JSON.stringify(reducedObj, null, 5), now, userEmail, createdDate, createdBy],
+          ]);
+        } else {
+          Logger.log(`No idValue for row ${row}, clearing columns D through G`);
+          // Clear out columns D through G if there's no data
+          sheet.getRange(row, 4, 1, 4).clearContent();
+
         }
-        if (!sheet.getRange(row, 7).getValue()) {
-          sheet.getRange(row, 7).setValue(userEmail);
-        }
-      } else {
-        Logger.log(`No idValue for row ${row}, clearing columns D through G`);
-        // Clear out columns D through G if there's no data
-        sheet.getRange(row, 4, 1, 4).clearContent();
       }
     }
   }
 }
 
+function parseJsonWithComments(jsonString) {
+  const lines = jsonString.split('\n');
+  const sanitizedLines = lines.map((line) => {
+    const commentIndex = line.indexOf('//');
+    return commentIndex >= 0 ? line.slice(0, commentIndex) : line;
+  });
+  const sanitizedJsonString = sanitizedLines.join('');
+  return JSON.parse(sanitizedJsonString);
+}
 
 
 
