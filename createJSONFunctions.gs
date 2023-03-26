@@ -19,6 +19,20 @@ function buildJSON(sheet, row) {
   // Read the list of keys from C1
   const fullObj = createFullObject(headers, values);
 
+  for (const key in fullObj) {
+    if (typeof fullObj[key] === "function") {
+      fullObj[key] = fullObj[key].toString(); // Convert functions to strings
+    }
+  }
+
+  // New code: Call the showAlert function stored in cell A1
+  const showAlertFunction = fullObj["testFunction"];
+  if (showAlertFunction) {
+    const showAlert = eval(`(${showAlertFunction})`);
+    showAlert();
+  }
+
+
   return fullObj;
 
   // let jsonWithComments = "{\n";
@@ -42,6 +56,7 @@ function buildJSON(sheet, row) {
   // return jsonWithComments;
 }
 
+
 function createFullObject(headers, values) {
   const obj = {};
 
@@ -58,6 +73,14 @@ function createFullObject(headers, values) {
         obj[header.replace(/json/i, "JSON")] = parseJsonWithComments(sanitizedValue);
       } catch (error) {
         Logger.log(`Unable to parse JSON value for key "${key}": ${sanitizedValue}`);
+        obj[key] = null;
+      }
+    } else if (header.toLowerCase().includes("function")) {
+      const key = header.replace(/function/i, "Function");
+      try {
+        obj[key] = eval(`(${value})`); // Wrap the value in parentheses to convert it into an anonymous function
+      } catch (error) {
+        Logger.log(`Unable to parse function for key "${key}": ${value}`);
         obj[key] = null;
       }
     } else {
@@ -80,9 +103,6 @@ function createReducedObject(fullObj, keyList) {
   return reducedObj;
 }
 
-
-
-
 function onEdit(e) {
   Logger.log(e);
   const sheetName = e.source.getActiveSheet().getName();
@@ -100,7 +120,7 @@ function onEdit(e) {
 
 function keyFilterChanged(sheet) {
   //example data
-  sheet = SpreadsheetApp.getActive().getSheetByName("Users")
+  // sheet = SpreadsheetApp.getActive().getSheetByName("Users")
   const keyList = sheet.getRange("C1").getValue().split("|");
   const data = sheet.getRange("B3:H" + sheet.getLastRow()).getValues();
 
@@ -123,7 +143,7 @@ function dataChanged(sheet,changedRange){
   //example data
   // sheet = SpreadsheetApp.getActive().getSheetByName("Users")
   // changedRange = sheet.getRange("I4")
-  const startingColumn = 8; // Where the actual data ends
+  const startingColumn = 7; // Where the actual data ends
   const dataRow = 3; // Where the actual data starts
   Logger.log(`startingColumn: ${startingColumn}`);
   const userEmail = Session.getActiveUser().getEmail(); // Get the user email
@@ -167,8 +187,8 @@ function dataChanged(sheet,changedRange){
         const keyList = ["id", "name", "icon", "status"]; // Update this with your actual key list
         const reducedObj = createReducedObject(fullObj, keyList);
 
-        Logger.log(`fullObj: ${fullObj}`);
-        Logger.log(`reducedObj: ${reducedObj}`);
+        Logger.log(`fullObj: ${JSON.stringify(fullObj)}`);
+        Logger.log(`reducedObj: ${JSON.stringify(reducedObj)}`);
 
         const now = new Date();
         const createdDate = sheet.getRange(row, 6).getValue() || now;
