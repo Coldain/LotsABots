@@ -2,7 +2,7 @@ function buildJSON(sheet, row) {
   //example data
   // sheet = SpreadsheetApp.getActive().getSheetByName("Users"), row=4
   Logger.log(`buildJSON - sheet: ${sheet}, row: ${row}`);
-  const idColumn = "H";
+  const idColumn = "G";
   const lastColumn = sheet.getLastColumn();
   Logger.log(`buildJSON - lastColumn: ${lastColumn}`);
   
@@ -121,8 +121,8 @@ function onEdit(e) {
 function keyFilterChanged(sheet) {
   //example data
   // sheet = SpreadsheetApp.getActive().getSheetByName("Users")
-  const keyList = sheet.getRange("C1").getValue().split("|");
-  const data = sheet.getRange("B3:H" + sheet.getLastRow()).getValues();
+  const keyList = sheet.getRange("B1").getValue().split("|");
+  const data = sheet.getRange("A3:H" + sheet.getLastRow()).getValues();
 
   const reducedObjects = data.map(row => {
     if (row[6]) { // Check if the H column has a value
@@ -136,7 +136,6 @@ function keyFilterChanged(sheet) {
 
   sheet.getRange(3, 3, reducedObjects.length, 1).setValues(reducedObjects);
 }
-
 
 
 function dataChanged(sheet,changedRange){
@@ -196,13 +195,13 @@ function dataChanged(sheet,changedRange){
 
         if (idValue) {
           // Set values in columns B, C, D, E, F, and G at once
-          sheet.getRange(row, 2, 1, 6).setValues([
+          sheet.getRange(row, 1, 1, 6).setValues([
             [JSON.stringify(fullObj,null,2), JSON.stringify(reducedObj, null, 5), now, userEmail, createdDate, createdBy],
           ]);
         } else {
           Logger.log(`No idValue for row ${row}, clearing columns D through G`);
           // Clear out columns D through G if there's no data
-          sheet.getRange(row, 4, 1, 4).clearContent();
+          sheet.getRange(row, 3, 1, 4).clearContent();
 
         }
       }
