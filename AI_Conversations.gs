@@ -17,6 +17,12 @@ function doPost(e) {
   return ContentService.createTextOutput("Data written successfully.");
 }
 
+function showSidebar() {
+  const htmlOutput = HtmlService.createHtmlOutputFromFile('AI_Conversations_UI')
+    .setTitle('Custom UI')
+    .setWidth(600);
+  SpreadsheetApp.getUi().showSidebar(htmlOutput);
+}
 
 function writeToSheet(data) {
   const sheet = SpreadsheetApp.getActive().getSheetByName("Data");
