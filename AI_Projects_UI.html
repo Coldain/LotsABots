@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <link rel="stylesheet" href="https://unpkg.com/@picocss/pico@latest/css/pico.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.0/css/all.min.css">
+    <style>
+      
+      body {
+        font-family: Arial, sans-serif;
+        margin: 10px;
+      }
+      .sidebar {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+      }
+      .main-area {
+        flex-grow: 1;
+        overflow-y: scroll;
+      }
+      .bottom-area {
+        display: flex;
+        justify-content: center;
+        margin-top: 10px;
+      }
+      .placeholder {
+        background-color: #f0f0f0;
+        padding: 10px;
+        margin-bottom: 10px;
+      }
+      .message-container {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        overflow-y: auto;
+      }
+
+      .message-card {
+        background-color: white;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        padding: 1rem;
+      }
+
+      .message-header {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      .user-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+      }
+
+      .message-content {
+        margin-top: 0.5rem;
+      }
+
+      .message-actions {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 0.5rem;
+      }
+
+      .message-actions i {
+        cursor: pointer;
+        font-size: 1.2rem;
+      }
+
+      .message-actions i:hover {
+        color: #007bff;
+      }
+
+
+      .message-reactions {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 0.5rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="sidebar">
+      <!-- Main area contains messages and placeholders for other elements -->
+      <div class="main-area">
+        <!-- Message container holds all messages -->
+        <div class="message-container">
+          <!-- Message card displays a single message -->
+          <div class="message-card">
+            <!-- Message header contains sender icon, sender name, and timestamp -->
+            <div class="message-header">
+              <img src="sender.icon" alt="user icon" class="user-icon">
+              <span class="sender-name">sender.name</span>
+              <span class="message-timestamp">timestamp</span>
+            </div>
+            <!-- Message content displays raw, expression, or interpretation based on activeUser.view -->
+            <div class="message-content"></div>
+            <!-- Message actions contains icons for different actions -->
+            <div class="message-actions">
+              <i class="fas fa-comment-dots open-thread"></i>
+              <i class="fas fa-code view-raw"></i>
+              <i class="fas fa-eye view-expression"></i>
+              <i class="fas fa-comment view-interpretation"></i>
+              <i class="fas fa-plus create-interpretation"></i>
+            </div>
+            <!-- Message reactions contains reaction icons and counts -->
+            <div class="message-reactions"></div>
+          </div>
+        </div>
+        <!-- Placeholders for other sidebar elements -->
+        <div class="placeholder">Side Conversation Placeholder</div>
+        <div class="placeholder">Groups Placeholder</div>
+        <div class="placeholder">Conversations Placeholder</div>
+        <div class="placeholder">Settings</div>
+      </div>
+      <!-- Bottom area contains input field for new messages and send button -->
+      <div class="bottom-area">
+        <input type="text" id="message-input" placeholder="Type your message here...">
+        <button id="send-button">Send</button>
+      </div>
+    </div>
+  </body>
+  <script>
+    // Add click event listeners for message action icons
+    document.addEventListener('DOMContentLoaded', function () {
+      const messageActionIcons = document.querySelectorAll('.message-actions i');
+      messageActionIcons.forEach((icon) => {
+        icon.addEventListener('click', function () {
+          console.log('Icon clicked:', this.classList);
+          // Perform the appropriate action based on the icon's class
+        });
+      });
+    });
+  
+  // Function to create and display reactions
+function createReactions(reactions, messageId) {
+  const reactionContainer = document.createElement('div');
+  reactionContainer.classList.add('reactions-container');
+
+  reactions.forEach(reaction => {
+    const reactionElement = document.createElement('div');
+    reactionElement.classList.add('reaction');
+    reactionElement.setAttribute('data-message-id', messageId);
+    reactionElement.setAttribute('data-reaction-id', reaction.id);
+
+    const reactionImg = document.createElement('img');
+    reactionImg.src = reaction.icon;
+    reactionElement.appendChild(reactionImg);
+
+    const reactionCount = document.createElement('span');
+    reactionCount.innerText = reaction.count;
+    reactionElement.appendChild(reactionCount);
+
+    reactionContainer.appendChild(reactionElement);
+  });
+
+  return reactionContainer;
+}
+
+// Function to handle reaction click events
+function handleReactionClick(e) {
+  const reactionElement = e.target.closest('.reaction');
+  const messageId = reactionElement.getAttribute('data-message-id');
+  const reactionId = reactionElement.getAttribute('data-reaction-id');
+
+  // Find the reaction in the data structure and increment the count
+  const message = findMessageById(messageId);
+  const reaction = message.reactions.find(r => r.id === reactionId);
+  reaction.count++;
+
+  // Update the reaction count displayed on the page
+  const reactionCountElement = reactionElement.querySelector('span');
+  reactionCountElement.innerText = reaction.count;
+}
+
+// Function to load session data from the server
+function loadSessionDataFromServer() {
+  return new Promise((resolve, reject) => {
+    google.script.run
+      .withSuccessHandler(resolve)
+      .withFailureHandler(reject)
+      .loadSessionData();
+  });
+}
+
+
+// Function to load data from the server by UUID
+function loadDataFromServer(sheetName, uuid) {
+  return new Promise((resolve, reject) => {
+    google.script.run
+      .withSuccessHandler(resolve)
+      .withFailureHandler(reject)
+      .loadData(sheetName, uuid);
+  });
+}
+
+// Function to save data to the server by UUID
+function saveDataToServer(sheetName, uuid, data) {
+  return new Promise((resolve, reject) => {
+    google.script.run
+      .withSuccessHandler(resolve)
+      .withFailureHandler(reject)
+      .saveData(sheetName, uuid, data);
+  });
+}
+
+function saveMessageToServer(message) {
+  // Generate a UUID for the message
+  google.script.run.generateUUID().then((uuid) => {
+
+    // Create a new data object based on the schema
+    const data = {
+      uuid: uuid,
+      mode: 'chat', // You can change this based on the actual mode of communication
+      raw: message.content,
+      intent: null, // You need to determine the intent of the message
+      context: null, // You need to determine the context
+      attachments: null, // You need to determine the attachments
+      timestamp: message.timestamp,
+      reactions: message.reactions,
+      sender: {
+        style: null, // You need to determine the sender's style
+        expression: null, // You need to determine the sender's expression
+        id: message.sender.id,
+        icon: message.sender.icon,
+      },
+      recepients: [
+        // Add recipients here. Each recipient should have a style and id. You'll need to determine the interpretation.
+        // {
+        //   style: null,
+        //   id: null,
+        //   interpretation: null,
+        // }
+      ],
+    };
+
+    // Save the message data to the server
+    google.script.run
+      .withSuccessHandler(() => {
+        google.script.run.htmlLogger('Message saved successfully');
+        console.log('Message saved successfully');
+      })
+      .withFailureHandler((error) => {
+        google.script.run.htmlLogger('Failed to save message:', error);
+        console.error('Failed to save message:', error);
+      })
+      .saveData('AI_Messages', uuid, data);
+  });
+}
+
+
+// Add event listeners for reaction clicks
+document.addEventListener('click', e => {
+  if (e.target.closest('.reaction')) {
+    handleReactionClick(e);
+  }
+});
+
+// Function to find a message by ID in the data structure
+function findMessageById(messageId) {
+  // Assuming sesssionData.activeConversation.priorMessages contains all messages
+  return sesssionData.activeConversation.priorMessages.find(m => m.id === messageId);
+}
+
+// Modify your existing message rendering function to include reactions
+function renderMessage(message) {
+  const messageElement = document.createElement('div');
+  messageElement.classList.add('message');
+  messageElement.setAttribute('data-message-id', message.id);
+
+  // ... Add other message properties like user icon, name, and content
+
+  const reactionsContainer = createReactions(message.reactions, message.id);
+  messageElement.appendChild(reactionsContainer);
+
+  loadSessionDataFromServer()
+  .then((sessionDataString) => {
+    const sessionData = JSON.parse(sessionDataString);
+    google.script.run.htmlLogger('Loaded session data:', sessionData):
+    console.log(('Loaded session data:', sessionData);
+  })
+  .catch((error) => {
+    console.error('Error loading session data:', error);
+  });
+
+
+  return messageElement;
+}
+
+  function updateMessages() {
+    google.script.run
+      .withSuccessHandler(renderMessages)
+      .withFailureHandler(function (error) {
+        google.script.run.htmlLogger('Error fetching data:', error):
+        console.error('Error fetching data:', error);
+      })
+      .getData();
+  }
+
+  function renderMessages(data) {
+    const messages = JSON.parse(data);
+
+    // Clear the existing messages
+    const messageContainer = document.querySelector('.message-container');
+    messageContainer.innerHTML = '';
+
+    // Render the new messages
+    messages.forEach((message) => {
+      const messageElement = renderMessage(message);
+      messageContainer.appendChild(messageElement);
+    });
+  }
+  function saveData(data) {
+    google.script.run
+      .withSuccessHandler(function () {
+        google.script.run.htmlLogger("Data updated successfully"):
+        console.log('Data updated successfully');
+      })
+      .withFailureHandler(function (error) {
+        google.script.run.htmlLogger("Error updating data"):
+        console.error('Error updating data:', error);
+      })
+      .updateData(data);
+  }
+
+// Function to create a new message object and add it to the message container
+  function sendMessage(content) {
+    const message = {
+      id: 'new-message', // Replace this with a unique ID
+      sender: {
+        name: 'Your Name', // Replace this with the sender's name
+        icon: 'sender.icon' // Replace this with the sender's icon URL
+      },
+      content: content,
+      timestamp: new Date().toISOString(),
+      reactions: []
+    };
+
+    const messageContainer = document.querySelector('.message-container');
+    const messageElement = renderMessage(message);
+    messageContainer.appendChild(messageElement);
+
+    // Save the message to the server (you'll need to implement the saveMessageToServer function)
+    saveMessageToServer(message);
+  }
+  // Call updateMessages when the page loads
+  document.addEventListener('DOMContentLoaded', function () {
+    updateMessages();
+
+    // Add your other DOMContentLoaded code here
+    // ...
+  });
+
+  // Event listener for the "Send" button
+  document.getElementById('send-button').addEventListener('click', function () {
+    const messageInput = document.getElementById('message-input');
+    const content = messageInput.value.trim();
+    if (content !== '') {
+      sendMessage(content);
+      messageInput.value = '';
+    }
+  });
+
+  // Event listener for the "Enter" key in the input field
+  document.getElementById('message-input').addEventListener('keydown', function (event) {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      const content = this.value.trim();
+      if (content !== '') {
+        sendMessage(content);
+        this.value = '';
+      }
+    }
+  });
+
+  // Other functions like viewing other conversations, groups, side conversations and threads, AI and user settingss, etc.
+
+  </script>
+</html>

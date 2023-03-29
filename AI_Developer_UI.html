@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    .user-message, .ai-message {
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px;
+      padding: 5px;
+      border-radius: 5px;
+    }
+
+    .user-message {
+      background-color: lightblue;
+    }
+
+    .ai-message {
+      background-color: lightgreen;
+    }
+
+    .message-content {
+      margin-left: 10px;
+    }
+
+    .edit-icon, .copy-icon {
+      margin-left: 5px;
+      cursor: pointer;
+    }
+
+    textarea {
+      display: block;
+      width: 100%;
+      margin-top: 10px;
+    }
+
+    .code-block {
+      display: inline-block;
+      background-color: #f0f0f0;
+      padding: 2px 4px;
+      font-family: monospace;
+      border-radius: 3px;
+    }
+
+    .message-container {
+      max-width: 100%;
+    }
+
+    @media (min-width: 768px) {
+      .message-container {
+        max-width: 768px;
+      }
+    }
+
+  </style>
+</head>
+<body>
+  <div id="message-container"></div>
+  <div id="navigation">
+    <button id="prev-sheet">&lt;</button>
+    <span id="current-sheet">1</span> / <span id="total-sheets">1</span>
+    <button id="next-sheet">&gt;</button>
+  </div>
+  <textarea id="message-input" placeholder="Type your message..."></textarea>
+  <button id="send-message">Send</button>
+
+  <script>
+  document.addEventListener('DOMContentLoaded', function() {
+    let currentMessageIndex = 0;
+    const messageHistory = [];
+
+    // Function to create a message container based on the sender and message content
+    function createMessageContainer(sender, messageContent) {
+      const messageContainer = document.createElement('div');
+      messageContainer.className = sender === 'user' ? 'user-message' : 'ai-message';
+
+      const senderImage = document.createElement('img');
+      senderImage.src = 'https://via.placeholder.com/32';
+      senderImage.width = 32;
+      senderImage.height = 32;
+      messageContainer.appendChild(senderImage);
+
+      const content = document.createElement('span');
+      content.className = 'message-content';
+      content.innerHTML = formatMessageContent(messageContent);
+      messageContainer.appendChild(content);
+
+      if (sender === 'user') {
+        const editIcon = document.createElement('img');
+        editIcon.src = 'https://via.placeholder.com/16';
+        editIcon.width = 16;
+        editIcon.height = 16;
+        editIcon.className = 'edit-icon';
+        editIcon.onclick = () => editMessage(messageHistory.length - 1);
+        messageContainer.appendChild(editIcon);
+      }
+
+      return messageContainer;
+    }
+
+    // Function to format the message content, replacing code blocks with a styled element
+    function formatMessageContent(messageContent) {
+      const codeBlockRegex = /```([\s\S]*?)```/g;
+      let formattedContent = messageContent.replace(codeBlockRegex, (match, code) => {
+        return `<span class="code-block">${code}<img src="https://via.placeholder.com/16" width="16" height="16" class="copy-icon" onclick="copyCodeToClipboard('${code.replace(/'/g, "\'")}')"></span>`;
+});
+return formattedContent;
+}
+
+    // Function to copy a code block to the clipboard when the copy icon is clicked
+    function copyCodeToClipboard(code) {
+      navigator.clipboard.writeText(code);
+    }
+
+    // Function to create a JSON object representing a message
+    function createMessageJson(sender, content, variations = []) {
+      return {
+        sender: sender,
+        content: content,
+        variations: variations
+      };
+    }
+
+    function displayMessage(sender, messageContent) {
+      const messageJson = createMessageJson(sender, messageContent);
+      const messageContainer = createMessageContainer(sender, messageContent);
+      const chat = document.getElementById('message-container');
+      chat.appendChild(messageContainer);
+      messageHistory.push(messageJson);
+    }
+
+    function sendMessage() {
+      const messageInput = document.getElementById('message-input');
+      const messageContent = messageInput.value.trim();
+      if (messageContent) {
+        //  google.script.run.htmlLogger('user sent: ' + messageContent);
+        displayMessage('user', messageContent);
+        messageInput.value = '';
+
+        // Call the function to send the message to the GPT API and receive a response
+        receiveMessageFromGptApi(messageContent);
+      }
+    }
+
+    // Function to display an AI message
+    function receiveMessage(messageContent) {
+      try {
+        displayMessage('ai', messageContent);
+      } catch (error) {
+        console.error('Error displaying AI message:', error);
+      }
+    }
+
+    // Function to simulate receiving a message from the GPT API
+    function receiveMessageFromGptApi(userMessage) {
+      try {
+        // Simulate a response from the GPT API based on the user's message
+        const aiMessage = 'AI response to: ' + userMessage;
+        receiveMessage(aiMessage);
+      } catch (error) {
+        console.error('Error receiving message from GPT API:', error);
+      }
+    }
+
+    function escapeHtml(unsafe) {
+      return unsafe
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+
+    function editMessage(index) {
+      const userMessage = messageHistory[index];
+      const newMessage = prompt("Edit your message:", userMessage.content);
+      if (newMessage !== null) {
+        userMessage.content = newMessage;
+      	//  google.script.run.htmlLogger('Edited: orgininal: ' + userMessage.content +'\nedited: ' + newMessage);
+        resubmitMessage(index);
+      }
+    }
+
+    function resubmitMessage() {
+      // Implement the function to resubmit past messages
+    }
+
+    function addQuickContext() {
+      // Implement the function to add quick context
+    }
+    function toggleAlternateMessages() {
+      const chat = document.getElementById('message-container');
+      chat.innerHTML = '';
+      currentMessageIndex = (currentMessageIndex + 1) % 2;
+      messageHistory.forEach((messageJson) => {
+        const variation = messageJson.variations[currentMessageIndex];
+        if (variation) {
+          displayMessage(messageJson.sender, variation.content);
+          //  google.script.run.htmlLogger('Switched: orgininal: ' + userMessage.content +'\nedited: ' + newMessage);
+        } else {
+          displayMessage(messageJson.sender, messageJson.content);
+        }
+      });
+    }
+
+    // Add two dummy messages
+    displayMessage('user', 'Hello, how are you?');
+    displayMessage('ai', 'Hi there! I\'m doing great, thank you.');
+
+    document.getElementById('message-input').addEventListener('keydown', function(event) {
+      if (event.key === 'Enter') {
+        sendMessage();
+      }
+    });
+
+    document.getElementById('send-message').addEventListener('click', function() {
+      sendMessage();
+    });
+
+    document.getElementById('prev-sheet').addEventListener('click', function() {
+      toggleAlternateMessages(-1);
+    });
+
+    document.getElementById('next-sheet').addEventListener('click', function() {
+      toggleAlternateMessages(1);
+      });
+  });
+  </script>
+</body>
+</html>

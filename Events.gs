@@ -1,3 +1,8 @@
+function onOpen(e) {
+  const spreadSheet = SpreadsheetApp.getActive()
+  const ui = SpreadsheetApp.getUi()
+  ui.createMenu("Developer").addItem("Open Projects","showSidebar").addItem("Open Dialogue","showGPT").addToUi();
+}
 
 function onEdit(e) {
   Logger.log(e);
