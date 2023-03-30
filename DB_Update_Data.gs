@@ -105,7 +105,7 @@ function createFullObject(headers, values) {
           obj[key] = HtmlService.createHtmlOutput(`${value}`)(); // Use the Function constructor
           Logger.log(`Created "${key}": ${value}`);
         } catch (error) {
-          Logger.log(`Unable to parse HTML for key "${key}": ${value}`);
+          Logger.log(`Unable to create HTML for key "${key}": ${value}`);
           obj[key] = null;
         }
       }
