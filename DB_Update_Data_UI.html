@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+  </head>
+  <body>
+    <h3>Enter JSON Data</h3>
+    <textarea id="jsonData" rows="10" cols="50"></textarea>
+    <br>
+    <button onclick="submitJsonData()">Submit</button>
+    <script>
+      function submitJsonData() {
+        const jsonData = document.getElementById('jsonData').value;
+        google.script.run.processJsonData(jsonData);
+        google.script.host.close();
+      }
+    </script>
+  </body>
+</html>

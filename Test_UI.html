@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <link rel="stylesheet" href="https://unpkg.com/@picocss/pico@latest/css/pico.min.css" />
+    <link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css'>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+      }
+
+      h1 {
+        color: #0073ae;
+      }
+
+      #items {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .section {
+        margin-bottom: 20px;
+      }
+
+      .section-header {
+        background-color: #ffbf75;
+        color: #003e5e;
+        padding: 5px;
+        font-size: 18px;
+        font-weight: bold;
+        border: 2px solid #0073ae;
+      }
+
+      .item {
+        cursor: pointer;
+        padding: 5px;
+        background-color: #003e5e;
+        color: #ffbf75;
+        margin: 5px 0;
+        border: 2px solid #ff8800;
+        border-radius: 5px;
+      }
+
+      .item:hover {
+        background-color: #0073ae;
+        border: 2px solid #003e5e;
+        color: #ff8800;
+      }
+
+      #refresh-icon {
+        position: absolute;
+        top: 5px;
+        right: 5px;
+        cursor: pointer;
+        color: #0073ae;
+        font-size: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Items</h1>
+    <i id="refresh-icon" class="fa fa-refresh" onclick="refreshSidebar()"></i>
+    <div id="items"></div>
+    <script>
+      function setItems(items) {
+        const itemsDiv = document.getElementById('items');
+        const htmlSection = createSection('HTML');
+        const functionSection = createSection('FUNCTION');
+
+        items.forEach((item) => {
+          const itemDiv = document.createElement('div');
+          itemDiv.className = 'item';
+          itemDiv.innerText = item.name;
+          itemDiv.title = JSON.stringify(item, null, 2);
+
+          if (item.type === 'FUNCTION') {
+            functionSection.appendChild(itemDiv);
+          } else if (item.type === 'HTML') {
+            htmlSection.appendChild(itemDiv);
+          }
+
+          itemDiv.onclick = () => {
+            if (item.type === 'FUNCTION') {
+              google.script.run.executeLoadedFunction(item, 'FUNCTION');
+            } else if (item.type === 'HTML') {
+              google.script.run.renderLoadedHTML(item, 'HTML');
+            }
+          };
+        });
+
+        itemsDiv.appendChild(htmlSection);
+        itemsDiv.appendChild(functionSection);
+      }
+
+      function createSection(type) {
+        const section = document.createElement('div');
+        section.className = 'section';
+        const header = document.createElement('div');
+        header.className = 'section-header';
+        header.innerText = type;
+        section.appendChild(header);
+        return section;
+      }
+
+      function getItems() {
+        google.script.run.withSuccessHandler(setItems).getAllItems();
+      }
+
+      function refreshSidebar() {
+        google.script.run.showTestSidebar();
+      }
+      window.onload = getItems;
+    </script>
+  </body>
+</html>

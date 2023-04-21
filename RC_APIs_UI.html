@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+  </head>
+  <body>
+    <button id="authorize">Authorize with RingCentral</button>
+    <script>
+      document.getElementById('authorize').addEventListener('click', () => {
+        google.script.run.authorize();
+      });
+    </script>
+  </body>
+</html>

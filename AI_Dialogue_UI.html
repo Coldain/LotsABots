@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <link rel="stylesheet" href="Sidebar.css">
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+      }
+
+      #carousel {
+        display: flex;
+        overflow-x: scroll;
+        height: 400px;
+      }
+
+      .card {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        width: 250px;
+        height: 400px;
+        margin-right: 20px;
+        padding: 10px;
+        border: 1px solid #ccc;
+      }
+
+      .placeholder {
+        width: 100%;
+        height: 50px;
+        background-color: #f0f0f0;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="carousel">
+      <!-- Your carousel cards will be generated here -->
+    </div>
+    <div id="controls">
+      <button id="prevCard">Past Cards</button>
+      <button id="nextCard">Future Card</button>
+      <button id="prevCard">Other Cards</button>
+      <button id="nextCard">New Cards</button>
+    </div>
+    <div id="messageInput">
+      <input type="text" id="userMessage" placeholder="Enter your message...">
+      <button id="sendMessage">Send</button>
+    </div>
+    <script>
+      document.getElementById("sendMessage").addEventListener("click", sendMessage);
+      document.getElementById("prevCard").addEventListener("click", prevCard);
+      document.getElementById("nextCard").addEventListener("click", nextCard);
+
+      function sendMessage() {
+        // Handle sending message to GPT API and receiving response
+        // Update the carousel with new cards as needed
+      }
+
+      function prevCard() {
+        // Navigate to the previous card in the carousel
+      }
+
+      function nextCard() {
+        // Navigate to the next card in the carousel
+      }
+
+
+    </script>
+  </body>
+</html>

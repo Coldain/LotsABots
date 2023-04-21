@@ -19,8 +19,9 @@ function doPost(e) {
 
 function showSidebar() {
   const htmlOutput = HtmlService.createHtmlOutput('AI_Projects_UI.html')
-    .setWidth(600);
-  SpreadsheetApp.getUi().showSidebar(htmlOutput,'Projects');
+    .setWidth(600)
+    .setTitle('Projects');
+  SpreadsheetApp.getUi().showSidebar(htmlOutput);
 }
 
 
