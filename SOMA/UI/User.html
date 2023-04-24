@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interaction Area</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+
+        #interactionArea {
+            background-color: #f5f5f5;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            min-width: 400px;
+        }
+
+        h2 {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 150px;
+            resize: vertical;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+        }
+
+        button {
+            font-size: 16px;
+            font-weight: bold;
+            padding: 8px 16px;
+            border: none;
+            background-color: #333;
+            color: #fff;
+            cursor: pointer;
+            border-radius: 4px;
+            margin-top: 10px;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #444;
+        }
+    </style>
+</head>
+<body>
+    <div id="interactionArea">
+        <h2>Type your message below:</h2>
+        <textarea id="userMessage" placeholder="Type your message here..."></textarea>
+        <button id="sendMessage">Send Message</button>
+    </div>
+    <script>
+        const sendMessageButton = document.getElementById('sendMessage');
+        const userMessage = document.getElementById('userMessage');
+
+        sendMessageButton.addEventListener('click', () => {
+            const message = userMessage.value.trim();
+            if (message) {
+                // TODO: Process and send the message to the App Script
+                console.log('Message:', message);
+                userMessage.value = '';
+            }
+        });
+    </script>
+</body>
+</html>

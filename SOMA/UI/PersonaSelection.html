@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Persona Selection</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.8.1/slick.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.8.1/slick-theme.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/assets/owl.carousel.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/assets/owl.theme.default.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/owl.carousel.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fuse.js/6.4.6/fuse.min.js"></script>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        .personaSelection-search-bar {
+            display: flex;
+            justify-content: center;
+            padding: 10px;
+            background-color: #333;
+        }
+
+        .personaSelection-search-input {
+            width: 80%;
+            padding: 0.625rem;
+            border: none;
+            border-radius: 0.3125rem;
+            outline: none;
+        }
+
+        .personaSelection-carousel-container {
+            position: relative;
+            margin-top: 10px;
+        }
+
+        .personaSelection-carousel{
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 40vh;
+        }
+
+        .personaSelection-carousel{
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 40vh;
+        }
+
+        .personaSelection-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1.25rem;
+            background-color: #fff;
+            border-radius: 0.3125rem;
+            box-shadow: 0 0.25rem 0.375rem rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .personaSelection-card:hover {
+            transform: scale(1.1);
+        }
+
+        .personaSelection-image {
+            width: 6.25rem;
+            height: 6.25rem;
+            border-radius: 0.25rem;
+            cursor: pointer;
+            object-fit: cover; 
+            transition: all 0.3s ease;
+        }
+
+        .personaSelection-image:hover {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+
+
+        .personaSelection-info {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .personaSelection-name {
+            font-size: 1rem;
+            font-weight: bold;
+            margin-top: 0.625rem;
+            text-decoration-line: underline;
+            text-decoration-style: solid;
+        }
+
+        .personaSelection-title {
+            font-size: 0.875rem;
+            margin-top: 0.3125rem;
+            text-decoration-line: underline;
+            text-decoration-style: double;
+            text-align: center;
+
+        }
+
+        .personaSelection-purpose {
+            font-size: 0.75rem;
+            text-align: center;
+            margin-top: 0.3125rem;
+        }
+
+        @media screen and (max-width: 768px) {
+            .personaSelection-image {
+                width: 4.375rem;
+                height: 4.375rem;
+            }
+
+            .personaSelection-name {
+                font-size: 0.875rem;
+            }
+
+            .personaSelection-title {
+                font-size: 0.75rem;
+            }
+
+            .personaSelection-purpose {
+                font-size: 0.625rem;
+            }
+        }
+
+    </style>
+</head>
+<body>
+    <div class="personaSelection-search-bar">
+        <input type="text" class="personaSelection-search-input" placeholder="Search personas...">
+    </div>
+    <div class="personaSelection-carousel-container">
+        <div class="owl-carousel">
+        </div>
+    </div>
+    <script>
+
+// <picture>
+//     <source media="(max-width: 480px)" srcset="path/to/small-image.jpg">
+//     <source media="(max-width: 768px)" srcset="path/to/medium-image.jpg">
+//     <img class="personaSelection-image" src="path/to/large-image.jpg" alt="Persona Image">
+// </picture>
+// // Consider this and uploscale the images. and store them in their own sheet. Have it be a proceses.
+
+
+
+    // Call this function on page load
+    function init() {
+    google.script.run.withSuccessHandler((refs) => {
+        console.log('References initialized:', refs);
+        window.references = refs;
+        loadPersonas();
+    }).getReferences();
+    }
+
+
+    function loadPersonas() {
+    console.log('Loading personas...');
+    google.script.run.withSuccessHandler((results) => {
+        buildCarousel(results);
+        initCarousel();
+        initSearch()
+    }).getMatchingObjects(references.personaSheetName);
+    }
+
+    function buildCarousel(results) {
+        console.log('Building carousel with results:', results);
+        const carousel = document.querySelector(".owl-carousel");
+
+        for (const sheetName in results) {
+            results[sheetName].forEach(result => {
+            const jsonData = JSON.parse(result.jsonData);
+            console.log('Adding persona:', jsonData.name, 'with images:', jsonData.imagesJSON);
+            const personaCard = document.createElement("div");
+            personaCard.className = "personaSelection-card";
+            personaCard.setAttribute("data-personaSelection-name", jsonData.name);
+
+            const personaImage = document.createElement("img");
+            personaImage.className = "personaSelection-image";
+
+            // Use the first imageUrl from jsonData
+            const imageUrl = jsonData.imagesJSON[0];
+            personaImage.src = imageUrl;
+
+            personaImage.alt = "Persona Image";
+            personaCard.appendChild(personaImage);
+
+            personaImage.addEventListener('click', (e) => {
+                e.stopPropagation();
+                clearTimeout(personaImage.timeoutId); // Clear previously scheduled updates
+                updatePersonaImage(personaImage, jsonData.imagesJSON);
+            });
+
+            const personaName = document.createElement("div");
+            personaName.className = "personaSelection-name";
+            personaName.textContent = jsonData.name;
+            personaCard.appendChild(personaName);
+
+            const personaTitle = document.createElement("div");
+            personaTitle.className = "personaSelection-title";
+            personaTitle.textContent = jsonData.title;
+            personaCard.appendChild(personaTitle);
+
+            const personaInfo = document.createElement("div");
+            personaInfo.className = "personaSelection-purpose";
+            personaInfo.textContent = jsonData.actorJSON.purpose;
+            personaCard.appendChild(personaInfo);
+
+            personaCard.setAttribute("data-persona-json", JSON.stringify(jsonData));
+
+            carousel.appendChild(personaCard);
+            triggerPersonaImageClick(personaImage);
+            });
+        }
+    }
+
+    function updatePersonaImage(personaImage, imagesJSON) {
+        const randomIndex = Math.floor(Math.random() * imagesJSON.length);
+        const imageUrl = imagesJSON[randomIndex];
+        personaImage.src = imageUrl;
+        personaImage.timeoutId = setTimeout(() => triggerPersonaImageClick(personaImage), 15000); // Change image every 15 seconds
+    }
+
+    function triggerPersonaImageClick(personaImage) {
+        personaImage.click();
+    }
+
+    function initCarousel() {
+    $(".owl-carousel").owlCarousel({
+        loop: true,
+        margin: 10,
+        nav: true,
+        responsive: {
+        0: {
+            items: 1
+        },
+        600: {
+            items: 3
+        },
+        1000: {
+            items: 5
+        }
+        }
+    });
+    }
+
+    function initSearch() {
+        const personaCards = document.querySelectorAll('.personaSelection-card');
+        const searchData = Array.from(personaCards).map(personaCard => {
+            const personaJSON = JSON.parse(personaCard.getAttribute("data-persona-json"));
+            personaJSON.element = personaCard;
+            return personaJSON;
+        });
+
+
+        console.log('Search data:', searchData);
+
+
+        const fuseOptions = {
+        keys: [
+            'name',
+            'title',
+            'actorJSON.description',
+            'actorJSON.purpose',
+            'actorJSON.characteristics',
+            'actorJSON.services.careerCoach',
+            'actorJSON.services.entrepreneurialMentor',
+            'actorJSON.services.socialNetworkingSuperpower',
+            'actorJSON.services.businessConsulting',
+            'actorJSON.philosophies',
+            'knowledgeJSON.edges.careerPath',
+            'knowledgeJSON.edges.skillsAndExpertise',
+            'knowledgeJSON.edges.networkConnections',
+            'knowledgeJSON.nodes.careerGoals',
+            'knowledgeJSON.nodes.entrepreneurialIdeas',
+            'knowledgeJSON.nodes.actionSteps',
+            'knowledgeJSON.nodes.personalBrand',
+            'sharedJSON.considerations.userProfile',
+            'sharedJSON.considerations.industryTrends',
+            'sharedJSON.considerations.networkingOpportunities',
+            'sharedJSON.considerations.tawnyTrailblazerSpecificConsiderations',
+            'sharedJSON.interactionSchema.coaching',
+            'sharedJSON.interactionSchema.mentorship',
+            'sharedJSON.interactionSchema.networking',
+            'sharedJSON.phases.short_term.SelfDiscovery_GoalSetting',
+            'sharedJSON.phases.short_term.SkillDevelopment_Enhancement',
+            'sharedJSON.phases.short_term.NetworkBuilding_Connection',
+            'sharedJSON.phases.mid_term.CareerCoaching_Planning',
+            'sharedJSON.phases.mid_term.EntrepreneurialMentorship_BusinessDevelopment',
+            'sharedJSON.phases.long_term.ProgressEvaluation_Adjustment'
+        ],
+        includeScore: true,
+        threshold: 0.3
+        };
+
+        const fuse = new Fuse(searchData, fuseOptions);
+
+        document.querySelector('.personaSelection-search-input').addEventListener('input', (e) => {
+            const searchTerm = e.target.value;
+            console.log('Search term:', searchTerm);
+            if (searchTerm) {
+            const results = fuse.search(searchTerm);
+            console.log('Search results:', results);
+            personaCards.forEach(card => card.style.display = 'none');
+            results.forEach(result => result.item.element.style.display = 'block');
+            } else {
+            personaCards.forEach(card => card.style.display = 'block');
+            }
+        });
+    }
+
+    document.addEventListener("DOMContentLoaded", init);
+
+  </script>
+</body>
+</html>

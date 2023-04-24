@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+  </head>
+  <body>
+    <div id="userList"></div>
+    <button onclick="google.script.host.close()">Close</button>
+    <script>
+      const users = google.script.run.withSuccessHandler(displayUsers).getMatchingUsers();
+
+      function displayUsers(matchingUsers) {
+        const userList = document.getElementById('userList');
+        matchingUsers.forEach(user => {
+          const userDiv = document.createElement('div');
+          userDiv.innerHTML = `<strong>Name:</strong> ${user.name}<br><strong>UUID:</strong> ${user.uuid}<br><strong>Email:</strong> ${user.email}<br><strong>Row:</strong> ${user.row}`;
+          userDiv.style.border = '1px solid black';
+          userDiv.style.margin = '5px';
+          userDiv.style.padding = '5px';
+          userDiv.style.cursor = 'pointer';
+
+          userDiv.addEventListener('click', () => {
+            google.script.run.updateJSONProperty("user", "userState", { uuid: user.uuid });
+            google.script.host.close();
+          });
+
+          userList.appendChild(userDiv);
+        });
+      }
+    </script>
+  </body>
+</html>

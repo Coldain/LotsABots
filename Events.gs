@@ -1,9 +1,29 @@
+let activeUser
+
 function onOpen(e) {
   const ui = SpreadsheetApp.getUi()
   ui.createMenu("Developer")
     .addItem("Open Projects","showSidebar")
     .addItem("Open Dialogue","showGPT")
+    .addItem('AI-X', 'showAIX')
     .addItem('Test Sidebar', 'showTestSidebar').addToUi();
+  const matchingUsers = findActiveUser()
+  if (matchingUsers.length > 1) {
+    Logger.log(matchingUsers[0])
+    activeUser = matchingUsers[0]
+    activeUser.status = "Online"
+    PropertiesService.getUserProperties().setProperty("useruuid",activeUser.uuid)
+  // } else if (matchingUsers.length > 1) {
+  //   displayUserSelector(); // Display the user selector dialog
+  } else {
+    // TODO Create user
+    newUser = {
+      email: Session.getActiveUser().getEmail(),
+      name: Session.getActiveUser().getEmail().split('@')[0]
+    }
+    activeUser = updateOrCreateRow(references.userSheetName, newUser, uuid = null)
+    PropertiesService.getUserProperties().setProperty("useruuid",activeUser.uuid)
+  }
 }
 
 // TODO create onInstall to set up checkForHashChanges timer and createBackup

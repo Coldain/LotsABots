@@ -63,30 +63,46 @@
     <div id="items"></div>
     <script>
       function setItems(items) {
+        console.log(items)
         const itemsDiv = document.getElementById('items');
         const htmlSection = createSection('HTML');
         const functionSection = createSection('FUNCTION');
 
-        items.forEach((item) => {
+        const processItem = (item, itemType) => {
+          const parseditem = JSON.parse(item.jsonData)
           const itemDiv = document.createElement('div');
           itemDiv.className = 'item';
-          itemDiv.innerText = item.name;
-          itemDiv.title = JSON.stringify(item, null, 2);
+          itemDiv.innerText = parseditem.name;
+          itemDiv.title = JSON.stringify(item.jsonData, null, 2);
 
-          if (item.type === 'FUNCTION') {
+          if (itemType === 'FUNCTION') {
             functionSection.appendChild(itemDiv);
-          } else if (item.type === 'HTML') {
+          } else if (itemType === 'HTML') {
             htmlSection.appendChild(itemDiv);
           }
 
           itemDiv.onclick = () => {
-            if (item.type === 'FUNCTION') {
-              google.script.run.executeLoadedFunction(item, 'FUNCTION');
-            } else if (item.type === 'HTML') {
-              google.script.run.renderLoadedHTML(item, 'HTML');
+            console.log(parseditem.uuid)
+            if (itemType === 'FUNCTION') {
+              google.script.run
+                .withSuccessHandler((results) => {
+                  console.log(results)
+                  google.script.run.executeLoadedFunction(results["WB FUNCTIONS"][0].jsonData, 'FUNCTION');
+                })
+                .getMatchingObjects("WB FUNCTIONS", "uuid", parseditem.uuid);
+            } else if (itemType === 'HTML') {
+              google.script.run
+                .withSuccessHandler((results) => {
+                  console.log(results)
+                  google.script.run.renderLoadedHTML(results["WB HTML"][0].jsonData, 'HTML');
+                })
+                .getMatchingObjects(["WB HTML"], "uuid", parseditem.uuid);
             }
           };
-        });
+        };
+
+        items["WB FUNCTIONS"].forEach((item) => processItem(item, 'FUNCTION'));
+        items["WB HTML"].forEach((item) => processItem(item, 'HTML'));
 
         itemsDiv.appendChild(htmlSection);
         itemsDiv.appendChild(functionSection);
@@ -103,7 +119,7 @@
       }
 
       function getItems() {
-        google.script.run.withSuccessHandler(setItems).getAllItems();
+        google.script.run.withSuccessHandler(setItems).getMatchingObjects(["WB HTML","WB FUNCTIONS"]);
       }
 
       function refreshSidebar() {

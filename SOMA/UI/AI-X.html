@@ -1,0 +1,228 @@
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI-X Main Dialogue</title>
+  <style>
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div id="component-container-1" class="component-container"></div>
+  <div id="component-container-2" class="component-container hidden"></div>
+  <button id="toggle-components">Toggle Components</button>
+
+  <script>
+    const componentUUIDs = [
+      "0d27c092-306a-4125-9c59-481ff7068c1b",
+      "404c7f34-ea15-45f0-bf6a-f276848b38b2",
+      "57f24295-66b0-489a-a363-0be9eadcf19d",
+      "ad5667ed-fb91-4d7f-9129-b4e670bf5c32",
+    ];
+
+    function init() {
+      const sheetName = 'WB HTML';
+      const header = 'uuid';
+      google.script.run.withSuccessHandler(loadComponents).getMatchingObjects([sheetName], [header], componentUUIDs);
+    }
+
+    function loadComponents(components) {
+      const componentsArray = components['WB HTML'].map(component => {
+        const parsedData = JSON.parse(component.jsonData);
+        return {
+          ...component,
+          ...parsedData
+        };
+      });
+
+      console.log('Received components:', componentsArray);
+
+      const container1Components = componentsArray.slice(0, 2).filter(c => c.HTML);
+      const container2Components = componentsArray.slice(2, 4).filter(c => c.HTML);
+
+      displayComponents(container1Components, "component-container-1");
+      displayComponents(container2Components, "component-container-2");
+    }
+
+
+
+    function displayComponents(components, containerId) {
+      const container = document.getElementById(containerId);
+      container.innerHTML = "";
+      components.forEach(component => {
+        console.log(`HTML content of component ${component.name}:`, component.HTML);
+        const componentDiv = document.createElement("div");
+        componentDiv.innerHTML = component.HTML;
+        container.appendChild(componentDiv);
+      });
+    }
+
+    document.getElementById("toggle-components").addEventListener("click", () => {
+      const container1 = document.getElementById("component-container-1");
+      const container2 = document.getElementById("component-container-2");
+      container1.classList.toggle("hidden");
+      container2.classList.toggle("hidden");
+    });
+
+    window.onload = init;
+  </script>
+</body>
+</html> -->
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI-X Main Dialogue</title>
+  <style>
+    /* Add existing CSS styles here */
+
+    #dropdown {
+      position: relative;
+      display: inline-block;
+    }
+
+    #dropdown-content {
+      position: absolute;
+      background-color: #f1f1f1;
+      min-width: 160px;
+      box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+      z-index: 1;
+    }
+
+
+    #dropdown:hover #dropdown-content {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div id="top-bar">
+    <div id="dropdown">
+      <div id="persona-display-container"></div>
+      <div id="dropdown-content">
+        <div id="persona-selection-container" style="display: none;"></div>
+        <dialog
+      </div id="dropdown-content-toggler">⬇️</div>
+    </div>
+  </div>
+  <div id="middle-section">
+    <div id="interaction-area"></div>
+    <div id="suggestions"></div>
+    <div id="mini-games"></div>
+  </div>
+  <div id="bottom-section">
+    <div id="knowledge-graph"></div>
+    <div id="context-history"></div>
+  </div>
+  <div id="right-bar">
+    <div id="user-section"></div>
+    <div id="settings"></div>
+  </div>
+  <div id="left-bar">
+    <div id="teams-groups"></div>
+    <div id="conversation-list"></div>
+  </div>
+  <script>function init() {
+      google.script.run.withSuccessHandler((refs) => {
+        window.references = refs;
+        google.script.run.withSuccessHandler(loadComponents).getComponentUUIDs();
+      }).getReferences();
+    }
+
+    function loadComponents(componentUUIDs) {
+      const sheetNames = [references.htmlSheetName];
+      const headers = ["uuid"];
+      const searchValues = Object.values(componentUUIDs);
+
+      google.script.run
+        .withSuccessHandler((components) => {
+          const componentsArray = components[references.htmlSheetName].map(component => {
+            const parsedData = JSON.parse(component.jsonData);
+            return {
+              ...component,
+              ...parsedData
+            };
+          });
+
+          console.log('Received components:', componentsArray);
+
+          const personaDisplay = componentsArray.find(c => c.name === "PersonaDisplay");
+          const personaSelection = componentsArray.find(c => c.name === "PersonaSelection");
+          const interactionArea = componentsArray.find(c => c.name === "InteractionCenterArea");
+
+          renderPersonaDisplay(personaDisplay);
+          renderPersonaSelection(personaSelection);
+          renderInteractionCenterArea(interactionArea);
+
+
+          // Render other components as needed
+          // ...
+
+        })
+        .getMatchingObjects(sheetNames, headers, searchValues);
+    }
+
+    function renderPersonaDisplay(component) {
+      console.log('Rendering PersonaDisplay:', component);
+      const container = document.getElementById("persona-display-container");
+      renderComponent(component, "HTML", container);
+    }
+
+    function renderPersonaSelection(component) {
+      console.log('Rendering PersonaSelection:', component);
+      const container = document.getElementById("persona-selection-container");
+      renderComponent(component, "HTML", container);
+    }
+
+    function renderInteractionCenterArea(component) {
+      console.log('Rendering InteractionCenterArea:', component);
+      const container = document.getElementById("interactionArea");
+      renderComponent(component, "HTML", container);
+    }
+
+    function togglePersonaDropdown() {
+      const personaDisplayContainer = document.getElementById("persona-display-container");
+      const personaSelectionContainer = document.getElementById("persona-selection-container");
+      const dropwdownToggler = document.getElementById("dropdown-content-toggler");
+
+      if (personaDisplayContainer.style.display === "none") {
+        personaDisplayContainer.style.display = "block";
+        personaSelectionContainer.style.display = "none";
+        dropwdownToggler.textContent = "⬇️";
+      } else {
+        personaDisplayContainer.style.display = "none";
+        personaSelectionContainer.style.display = "block";
+        dropwdownToggler.textContent = "⬆️";
+      }
+    }
+
+    document.getElementById("dropdown").addEventListener("click", togglePersonaDropdown);
+
+
+
+    function renderComponent(component, type, container) {
+      if (component && component[type]) {
+        container.innerHTML = component[type];
+
+        const scripts = container.getElementsByTagName("script");
+        for (let i = 0; i < scripts.length; i++) {
+          const oldScript = scripts[i];
+          const newScript = document.createElement("script");
+          newScript.innerHTML = oldScript.innerHTML;
+          oldScript.parentNode.replaceChild(newScript, oldScript);
+        }
+      }
+    }
+
+
+    // Call the init function when the window loads
+    window.onload = init;
+  </script>
+</body>
+</html>

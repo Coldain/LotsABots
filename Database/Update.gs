@@ -132,7 +132,9 @@ function handleKeyDataChanged(sheet, changedRange) {
     Logger.log({changedRange})
     sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheet);
     const userEmail = sheet.getRange(`${references.modifiedByColumn}${changedRange}`).getValue()
-    processUpdatedRow(sheet, changedRange, userEmail, references.uuidColumnNum);
+    const updatedRows = new Set();
+    updateRowIfNeeded(sheet, changedRange, updatedRows)
+    return processUpdatedRow(sheet, changedRange, userEmail, references.uuidColumnNum);
   }
   else{
     const userEmail = Session.getActiveUser().getEmail();
@@ -178,17 +180,65 @@ function updateRowIfNeeded(sheet, row, updatedRows) {
   }
 }
 
+function updateOrCreateRow(sheetName, jsonObject, uuid = null) {
+  const sheet = SpreadsheetApp.getActive().getSheetByName(sheetName);
+  const data = sheet.getRange(1, 1, sheet.getLastRow(), sheet.getLastColumn()).getValues();
+  const headers = data[0];
+  const uuidColumnIndex = headers.findIndex(header => header === 'uuid');
+
+  const findFirstEmptyRow = () => {
+    for (let i = 1; i < data.length; i++) {
+      if (!data[i][0] && !data[i][1] && !data[i][uuidColumnIndex]) {
+        return i+1;
+      }
+    }
+    return data.length;
+  };
+
+  const columnsToUpdate = getColumnNumbersByHeaders(sheet, Object.keys(jsonObject));
+  let targetRowIndex;
+
+  if (uuid) {
+    // Find the row with the matching UUID
+    const matchingRowIndex = data.slice(1).findIndex(row => row[uuidColumnIndex] === uuid);
+
+    if (matchingRowIndex > -1) {
+      targetRowIndex = matchingRowIndex + 2;
+    } else {
+      targetRowIndex = findFirstEmptyRow();
+    }
+  } else {
+    targetRowIndex = findFirstEmptyRow();
+  }
+
+  // Update the target row with new data
+  Object.entries(columnsToUpdate).forEach(([key, colNum]) => {
+    sheet.getRange(targetRowIndex, colNum).setValue(jsonObject[key]);
+  });
+
+  // Append a new row at the end and copy formulas from the last row
+  const lastRowIndex = sheet.getLastRow();
+  sheet.insertRowAfter(lastRowIndex);
+  sheet.getRange(lastRowIndex, 1, 1, sheet.getLastColumn()).copyTo(sheet.getRange(lastRowIndex + 1, 1, 1, sheet.getLastColumn()), { contentsOnly: false });
+
+  // Call handleKeyDataChanged with the sheet name and the updated row number
+  return handleKeyDataChanged(sheetName, targetRowIndex);
+   JSON.parse(sheet.getRange(`${references.jsonDenseColumn}${lastRowIndex}`).getValue())
+}
+
+
+
 function processUpdatedRow(sheet, row, userEmail, startingColumn) {
   const idValue = sheet.getRange(row, startingColumn).getValue();
   const hash = sheet.getRange(references.hashNewColumn + row).getValue();
   const oldhash = sheet.getRange(references.hashOldColumn + row).getValue();
   const status = sheet.getRange(references.statusColumn + row).getValue();
-
+  let fullObj
   Logger.log(`Processing updated row: ${row}`);
 
   if (status !== "Deleted") {
     if (hash) {
-      const fullObj = buildJSON(sheet, row);
+      fullObj = buildJSON(sheet, row);
       const keyList = sheet.getRange(references.keyList).getValue().split("|");
       const reducedObj = createReducedObject(fullObj, keyList);
 
@@ -237,6 +287,7 @@ function processUpdatedRow(sheet, row, userEmail, startingColumn) {
     // Clear out columns D through G if there's no data
     sheet.getRange(row, references.jsonDenseColumnNum, 1, (references.uuidColumnNum - references.jsonDenseColumnNum + 1)).clearContent();
   }
+  return fullObj;
 }
 
 function getJSONArray(rawIds, refSheetName) {
@@ -362,19 +413,25 @@ function processHTML(header, value) {
 }
 
 function renderLoadedHTML(loadedObj, htmlKey) {
-  if (typeof loadedObj === "string") {
+  Logger.log(`Object: ${loadedObj}
+              htmlkey: ${htmlKey}`)
+  let htmlString
+  if (typeof loadedObj === "object") {
+    htmlString = loadedObj.HTML;
+  } else if (typeof loadedObj === "string") {
     try {
       loadedObj = JSON.parse(loadedObj);
+      htmlString = loadedObj[htmlKey];
     } catch (error) {
       Logger.log(`Failed to parse the input as JSON: ${loadedObj}`);
       return;
     }
   }
 
-  const htmlString = loadedObj[htmlKey];
-
   if (htmlString) {
-    const htmlOutput = HtmlService.createHtmlOutput(htmlString);
+    const htmlOutput = HtmlService.createHtmlOutput(htmlString)
+        .setWidth(1600)
+        .setHeight(900);
     const name = loadedObj["name"] || "Rendered HTML";
     SpreadsheetApp.getUi().showModalDialog(htmlOutput, name);
   } else {
@@ -383,6 +440,9 @@ function renderLoadedHTML(loadedObj, htmlKey) {
 }
 
 function executeLoadedFunction(loadedObj, funcKey, params) {
+  Logger.log(`Object: ${loadedObj}
+              funcKey: ${funcKey}
+              params: ${params}`)
   if (typeof loadedObj === "string") {
     try {
       loadedObj = JSON.parse(loadedObj);

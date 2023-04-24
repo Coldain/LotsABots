@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interaction Area</title>
+    <base target="_top">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"> 
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://unpkg.com/adaptivecards@2.11.2/dist/adaptivecards.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+        
+        #interactionArea {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          width: 100%;
+          height: 100%;
+        }
+
+      #navigation {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        width: 80%;
+        height: 10%;
+        margin-top: 1rem;
+      }
+
+      .nav-row {
+        display: flex;
+        justify-content: center;
+        width: 100%;
+      }
+
+
+      #middleButton {
+        grid-column: 2 / span 1;
+        grid-row: 2 / span 1;
+      }
+
+        button {
+          font-size: 1.2rem;
+          background-color: #f0f0f0;
+          border: 1px solid #ccc;
+          border-radius: 4px;
+          padding: 0.5rem 1rem;
+          margin: 0 0.5rem;
+          cursor: pointer;
+        }
+
+        button:hover {
+          background-color: #e6e6e6;
+        }
+
+        .questionButton {
+          font-size: 1rem;
+          background-color: #f0f0f0;
+          border: 1px solid #ccc;
+          border-radius: 4px;
+          color: #333;
+          font-weight: 600;
+          padding: 0.7rem 1.2rem;
+          margin: 0.5rem 0;
+          cursor: pointer;
+          width: 100%;
+          text-align: left;
+        }
+
+        .questionButton:hover {
+          background-color: #e6e6e6;
+        }
+
+        .userMessage {
+          background-color: #f0f0f0;
+          border-radius: 4px;
+          border: 1px solid #ccc;
+          padding: 0.5rem 1rem;
+          margin: 0.5rem 0;
+          width: 100%;
+          text-align: left;
+        }
+        #interactionArea {
+            background-color: #f5f5f5;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            min-width: 400px;
+        }
+
+        h2 {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 150px;
+            resize: vertical;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+        }
+
+        button {
+            font-size: 16px;
+            font-weight: bold;
+            padding: 8px 16px;
+            border: none;
+            background-color: #333;
+            color: #fff;
+            cursor: pointer;
+            border-radius: 4px;
+            margin-top: 10px;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #444;
+        }
+
+        .carousel {
+          display: flex;
+          overflow-x: auto;
+          scroll-snap-type: x mandatory;
+          -webkit-overflow-scrolling: touch;
+          scrollbar-width: none;
+          margin: 1rem 0;
+        }
+
+        .carousel::-webkit-scrollbar {
+          display: none;
+        }
+
+        .carousel-card {
+          flex: 0 0 auto;
+          scroll-snap-align: center;
+          background-color: white;
+          border-radius: 4px;
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+          padding: 20px;
+          margin-right: 16px;
+          width: 300px;
+        }
+
+        .carousel-card:last-child {
+          margin-right: 0;
+        }
+
+        .timeline {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          width: 100%;
+          margin: 1rem 0;
+        }
+
+        .timeline-element {
+          display: flex;
+          align-items: center;
+          margin: 8px 0;
+        }
+
+        .timeline-line {
+          width: 2px;
+          height: 100%;
+          background-color: #ccc;
+          position: absolute;
+        }
+
+        .timeline-circle {
+          width: 16px;
+          height: 16px;
+          border-radius: 50%;
+          background-color: #333;
+          z-index: 2;
+        }
+
+        .timeline-content {
+          background-color: white;
+          border-radius: 4px;
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+          padding: 12px;
+          margin-left: 24px;
+          position: relative;
+          z-index: 1;
+        }
+
+        button i {
+          margin-right: 0.5rem;
+        }
+
+        #responses {
+          margin-top: 1rem;
+        }
+
+  </style>
+</head>
+<body>
+  <div id="interactionArea">
+    </div>
+    <div id="userCard">
+      <h3>Interaction Navigation</h3>
+      <div id="navigation">
+        <button id="upArrow"><i class="fas fa-chevron-up"></i> Past</button>
+        <button id="leftArrow"><i class="fas fa-chevron-left"></i> Alternative</button>
+        <button id="middleButton"><i class="fas fa-play"></i>Speak</button>
+        <button id="rightArrow"><i class="fas fa-chevron-right"></i> Variation</button>
+        <button id="downArrow"><i class="fas fa-chevron-down"></i> Future</button>
+      </div>
+
+
+      <div id="interactionArea">
+          <h2>Type your message below:</h2>
+          <textarea id="userMessage" placeholder="Type your message here..."></textarea>
+          <button id="sendMessage">Send Message</button>
+      </div>
+    </div>
+  <script>
+    const persona = google.script.run.withSuccessHandler((results) => {
+          console.log('Persona Loaded:', results);
+        }).findUserPersona();
+
+    function renderAdaptiveCard(systemAdaptiveCardJSON, userAdaptiveCardJSON) {
+      console.log('System Adaptive Card:', systemAdaptiveCardJSON);
+      console.log('User Adaptive Card:', userAdaptiveCardJSON);
+      const interactionArea = document.getElementById('interactionArea');
+      interactionArea.innerHTML = ''; // Clear the previous content
+
+      // Render the system adaptive card using the Adaptive Cards SDK
+      const systemAdaptiveCard = new AdaptiveCards.AdaptiveCard();
+      systemAdaptiveCard.parse(systemAdaptiveCardJSON);
+      const renderedSystemCard = systemAdaptiveCard.render();
+      interactionArea.appendChild(renderedSystemCard);
+
+      if (userAdaptiveCardJSON)
+      {
+        // Render the user adaptive card using the Adaptive Cards SDK
+        const userAdaptiveCard = new AdaptiveCards.AdaptiveCard();
+        userAdaptiveCard.parse(userAdaptiveCardJSON);
+        const renderedUserCard = userAdaptiveCard.render();
+        interactionArea.appendChild(renderedUserCard);
+      }
+    }
+
+      let thread = {}
+      let messages = []; // Load your messages array here
+      let currentMessageIndex = messages.length - 1; // Start with the last message
+
+
+    // Get user state
+      google.script.run.withSuccessHandler((userState) => {
+          console.log('UserState:', userState);
+        // Get the conversation UUID from the user state
+        const threaduuid = userState.threaduuid;
+
+        // Get the threads using the conversation UUID
+        google.script.run.withSuccessHandler((results) => {
+          console.log('results:', results);
+
+          // Process the threads to display the messages
+          thread = JSON.parse(results["AI Threads"][0].jsonData);
+          console.log('Threads :', thread);
+          messages = thread.messageJSON
+          console.log('Messages:', messages);
+
+          // Render the first adaptive card only after messages have been loaded
+          if (messages.length > 0) {
+            currentMessageIndex = messages.length - 1;
+            renderAdaptiveCard(messages[currentMessageIndex].adaptiveCardJSON);
+            updateArrowButtonsState();
+          }
+        }).getMatchingObjects("AI Threads", "uuid", threaduuid);
+
+      }).getUserState();
+      
+
+      // document.getElementById("leftArrow").addEventListener("click", function() {
+      //   // Navigate to alternative interactions
+      //   // TODO: Implement the logic to navigate alternative messages
+      // });
+
+      // document.getElementById("rightArrow").addEventListener("click", function() {
+      //   // Create new variation
+      //   // TODO: Implement the logic to create a new variation
+      // });
+
+     document.getElementById("upArrow").addEventListener("click", function() {
+      // Navigate to past interactions
+      if (currentMessageIndex > 1) {
+        currentMessageIndex -= 2;
+        renderAdaptiveCard(messages[currentMessageIndex].adaptiveCardJSON, messages[currentMessageIndex + 1].adaptiveCardJSON);
+      }
+      updateArrowButtonsState();
+    });
+
+    document.getElementById("downArrow").addEventListener("click", function() {
+      // Navigate / Create new future interactions
+      if (currentMessageIndex < messages.length - 3) {
+        currentMessageIndex += 2;
+        renderAdaptiveCard(messages[currentMessageIndex].adaptiveCardJSON, messages[currentMessageIndex + 1].adaptiveCardJSON);
+      }
+      updateArrowButtonsState();
+    });
+
+    function updateArrowButtonsState() {
+      const upArrow = document.getElementById("upArrow");
+      const downArrow = document.getElementById("downArrow");
+
+      if (currentMessageIndex <= 1) {
+        upArrow.disabled = true;
+      } else {
+        upArrow.disabled = false;
+      }
+
+      if (currentMessageIndex >= messages.length - 3) {
+        downArrow.disabled = true;
+      } else {
+        downArrow.disabled = false;
+      }
+    }
+
+
+      const sendMessageButton = document.getElementById('sendMessage');
+      const userMessage = document.getElementById('userMessage');
+
+      sendMessageButton.addEventListener('click', () => {
+          const message = userMessage.value.trim();
+          if (message) {
+              // TODO: Process and send the message to the App Script
+              console.log('Message:', message);
+              userMessage.value = '';
+          }
+      });
+
+  </script>
+</body>
+</html>

@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Persona Top Bar</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        #topBar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background-color: #333;
+            color: #fff;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: height 0.5s ease, background-color 0.3s ease;
+        }
+
+        #topBar {
+            height: 20vh;
+        }
+
+        #topBar:hover {
+            background-color: #444;
+        }
+
+        .persona-images {
+            display: flex;
+            height: 100%;
+        }
+
+        .persona-image {
+            max-height: 100%;
+            border-radius: 4px;
+            object-fit: cover;
+            transition: transform 0.3s ease, top 0.5s ease, left 0.5s ease, z-index 0.5s ease; 
+            position: relative;
+            z-index: 1;
+        }
+
+        .persona-image:hover {
+            transform: scale(3) translateX(2.6em) translateY(2.45em);
+            z-index: 2;
+        }
+
+        .persona-image::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0);
+            border-radius: 4px;
+            transition: background-color 0.5s ease;
+            z-index: -1;
+        }
+
+        .persona-image:hover::after {
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+
+        .persona-info {
+          display: flex;
+          flex-direction: column;
+          justify-content: space-around;
+          overflow: hidden;
+          white-space: nowrap;
+          text-overflow: ellipsis;
+          min-width: 30%;
+          padding: 1em;
+          height: 100%;
+        }
+
+        .persona-name {
+          font-size: 1.5rem;
+          font-weight: bold;
+          transition: color 0.5s ease;
+          text-decoration-line: underline;
+          text-decoration-style: solid;
+        }
+
+        .persona-title {
+            font-size: 1.25rem;
+            word-wrap: break-word;
+            transition: color 0.5s ease;
+            text-decoration-line: underline;
+            text-decoration-style: double;
+        }
+
+
+        #conversationsIcon, #settingsIcon {
+            font-size: 2rem;
+            padding: 0.5rem;
+            transition: transform 0.2s ease, color 0.3s ease;
+        }
+
+        #conversationsIcon:hover, #settingsIcon:hover {
+            transform: scale(1.3);
+            color: #333;
+        }
+
+
+      .persona-image:hover ~ .persona-info .persona-name,
+      .persona-image:hover ~ .persona-info .persona-title {
+        color: #333;
+      }
+
+        @media screen and (max-width: 768px) {
+            .persona-info {
+                font-size: 0.8em;
+                line-height: 1.2em;
+                margin: 0 10px;
+            }
+        }
+
+        .ticker {
+          display: flex;
+          user-select: none;
+          cursor: grab;
+          overflow-x: scroll;
+        }
+
+        .ticker::-webkit-scrollbar {
+          height: 0;
+          transition: height 0.3s ease;
+        }
+
+        .ticker:hover::-webkit-scrollbar {
+          height: 8px;
+        }
+
+        .ticker:active::-webkit-scrollbar {
+          height: 8px;
+        }
+
+        .ticker::-webkit-scrollbar-thumb {
+          background-color: #aaa;
+          border-radius: 4px;
+        }
+
+        .ticker::-webkit-scrollbar-thumb:hover {
+          background-color: #888;
+        }
+
+
+        .ticker__list {
+          display: flex;
+          white-space: nowrap;
+          padding-right: 3rem;
+        }
+
+        html {
+          font-size: calc(0.5em + 1vw);
+        }
+
+        @media screen and (max-width: 768px) {
+            .persona-image:hover {
+                transform: scale(2) translateX(3.375em) translateY(2.375em);
+            }
+        }
+
+        @media screen and (max-width: 480px) {
+            .persona-image:hover {
+                transform: scale(1.5) translateX(3.375em) translateY(2.375em);
+            }
+        }
+
+
+    </style>
+</head>
+<body>
+    <div id="topBar" class="collapsed">
+          <span z-index=4 class="icon" id="conversationsIcon">🗨️</span>
+        <div class="persona-images">
+            <img class="persona-image" src="" alt="Persona Image">
+        </div>
+        <div class="persona-info">
+            <div class="persona-name"></div>
+            <div class="persona-title"></div>
+            <div class="ticker">
+            <div class="ticker__list">
+              <div id="purpose" class="ticker__item"></div>
+              <div id="description" class="ticker__item"></div>
+              <div id="characteristics" class="ticker__item"></div>
+              <div id="services" class="ticker__item"></div>
+              <div id="philosophies" class="ticker__item"></div>
+              <div id="interactionSchema" class="ticker__item"></div>
+            </div>
+            <div class="persona-details"></div>
+            </div>
+        </div>
+        <div>
+          <span z-index=4 class="icon" id="settingsIcon">⚙️</span>
+        </div>
+    </div>
+    <script>
+      const topBar = document.getElementById('topBar');
+      const personaName = document.querySelector('.persona-name');
+      const personaTitle = document.querySelector('.persona-title');
+      const personaImage = document.querySelector('.persona-image');
+      const personaDetails = document.querySelector('.persona-details');
+      const purpose = document.getElementById('purpose');
+      const description = document.getElementById('description');
+      const characteristics = document.getElementById('characteristics');
+      const services = document.getElementById('services');
+      const philosophies = document.getElementById('philosophies');
+      const interactionSchema = document.getElementById('interactionSchema');
+
+      const persona = {
+  "uuid": "b094d5f6-e864-46f8-a55d-3435dbdad018",
+  "status": "Active",
+  "name": "Tawny Trailblazer",
+  "title": "Career Catalyst & Entrepreneurial Pathfinder",
+  "start": "Welcome to Tawny Trailblazer's Career Catalyst & Entrepreneurial Pathfinder experience! Let's work together to help you land your dream job and empower you to launch your own consulting business. We will focus on your strengths, enhance your skills, and develop a strong professional network. To get started, you may consider answering the following questions or share your thoughts:\\n\\n1. What is your dream job or desired consulting niche?\\n2. What are your strengths and areas of expertise?\\n3. What are the key skills you want to develop?\\n4. What are your short-term and long-term career goals?\\n5. How can we leverage your existing network and build new connections?\\n\\nFeel free to ask for guidance, support, or additional resources at any point during our collaboration.",
+  "actorJSON": {
+    "description": "Career coach. If mother nature, marry poppins, and barbie were one person. in an office. Career coaching, mentor, vision board. Flowers, nature, fairies, inspirational, trailblazer, business professional",
+    "purpose": "To guide users towards their dream job and empower them to establish their own business, by providing expert insights, coaching, and leveraging social networking connections.",
+    "characteristics": [
+      "insightful",
+      "supportive",
+      "motivational",
+      "resourceful",
+      "encouraging and informative communication style"
+    ],
+    "services": {
+      "careerCoach": "Help users identify their strengths, areas of expertise, and growth opportunities. Develop customized coaching plans to enhance skills and achieve career goals.",
+      "entrepreneurialMentor": "Provide guidance and support to users as they explore their entrepreneurial ideas and navigate the process of starting their own business.",
+      "socialNetworkingSuperpower": "Leverage various social networking platforms and strategies to help users build a strong professional network, enhance their online presence, and connect with potential job or business opportunities.",
+      "businessConsulting": "Assist users in starting their own consulting business by guiding them through the planning, launching, and growth phases, as well as identifying and capitalizing on market opportunities."
+    },
+    "philosophies": [
+      "Individualized Coaching",
+      "Networking Mastery",
+      "Skill Development & Enhancement",
+      "Goal-Oriented Planning",
+      "Entrepreneurial Empowerment",
+      "Personal Brand Building"
+    ]
+  },
+  "knowledgeJSON": {
+    "edges": {
+      "careerPath": "The user's professional journey, including past experiences, current goals, and future aspirations.",
+      "skillsAndExpertise": "User's strengths, areas of expertise, and opportunities for growth.",
+      "networkConnections": "User's existing professional connections and potential networking opportunities."
+    },
+    "nodes": {
+      "careerGoals": "User's short-term and long-term career objectives and desired professional milestones.",
+      "entrepreneurialIdeas": "User's business concepts, market analysis, and growth opportunities.",
+      "actionSteps": "Specific tasks and strategies designed to help users achieve their career and entrepreneurial goals.",
+      "personalBrand": "User's unique professional identity, online presence, and reputation."
+    }
+  },
+  "sharedJSON": {
+    "considerations": {
+      "userProfile": "User's specific background, skills, experience, and career aspirations.",
+      "industryTrends": "Current trends, opportunities, and developments in the user's desired industry or niche.",
+      "networkingOpportunities": "Events, platforms, and strategies to expand the user's professional network and make meaningful connections.",
+      "tawnyTrailblazerSpecificConsiderations": "Aspects of the career coaching and entrepreneurial mentorship that reflect Tawny Trailblazer's unique approach, such as personalized guidance, goal-setting, and networking strategies and problem-solving."
+    },
+    "interactionSchema": {
+      "coaching": "Provide personalized career advice and support to help users identify and pursue their dream job. Collaborate on goal setting, skill development, and action planning.",
+      "mentorship": "Guide users through the process of starting their own consulting business, offering insights, resources, and encouragement at every step of their entrepreneurial journey.",
+      "networking": "Assist users in building and leveraging their professional network, connecting with influencers, and seizing opportunities in their desired industry or niche."
+    },
+    "phases": {
+      "short_term": {
+        "SelfDiscovery_GoalSetting": "Guide users to reflect on their strengths, areas of expertise, and aspirations. Help them identify their dream job or desired consulting niche, set short-term and long-term career goals, and create a personal brand.",
+        "SkillDevelopment_Enhancement": "Help users develop key skills relevant to their career or entrepreneurial goals, providing access to various resources and learning opportunities to enhance their skills.",
+        "NetworkBuilding_Connection": "Assist users in leveraging their existing network and making new connections, exploring various networking platforms, attending events, and engaging with influencers in their desired industry or niche."
+      },
+      "mid_term": {
+        "CareerCoaching_Planning": "Provide personalized career advice, guiding users through the job search process, refining their resumes and cover letters, preparing them for interviews, and identifying potential career opportunities.",
+        "EntrepreneurialMentorship_BusinessDevelopment": "Offer guidance throughout the entire process of starting a consulting business, covering business planning, market analysis, identifying growth opportunities, and navigating the challenges of launching and running a business."
+      },
+      "long_term": {
+        "ProgressEvaluation_Adjustment": "Help users assess their progress, celebrate their accomplishments, identify areas for improvement, and adjust their plans if needed, setting new objectives for continued growth and success."
+      }
+    }
+  },
+  "imagesJSON": [
+    "https://drive.google.com/uc?export=download&id=1UYKvpnne1bWHlx1HXIc2eQinF78o_J9O",
+    "https://drive.google.com/uc?export=download&id=1bY4D00I80Dn2uvEjrh63pr98YOOnBhHD",
+    "https://drive.google.com/uc?export=download&id=1L93nQU0zAWBLMD396mRHWmOMlvrZIp5P",
+    "https://drive.google.com/uc?export=download&id=16ATogMnmG8DwMxCqCCm-dzK19udpmrmd",
+    "https://drive.google.com/uc?export=download&id=13ruEnEqJb963yw8UQLXrf-Bh03lX70Ma",
+    "https://drive.google.com/uc?export=download&id=1crdE5QOHySxYsH5L-HbAfIE2uZJ8x1lI",
+    "https://drive.google.com/uc?export=download&id=19zKQpIPUh3EB2f6hLBsFKWSp9KlDccKr",
+    "https://drive.google.com/uc?export=download&id=1zzlf7OnkunNKivoLm6KaAYlP14rJmCUr",
+    "https://drive.google.com/uc?export=download&id=1NzDlAMdncu1vqO07TTzNW3kR4O0ezG4D"
+  ]
+}
+
+      function displayPersonaInfo() {
+          personaName.textContent = persona.name;
+          personaTitle.textContent = persona.title;
+          personaImage.alt = persona.actorJSON.description;
+
+          purpose.textContent = `  --  Purpose: ${persona.actorJSON.purpose}`;
+          description.textContent = `  --  Description: ${persona.actorJSON.description}`;
+          characteristics.textContent = `  --  Characteristics: ${persona.actorJSON.characteristics}`;
+          services.textContent = `  --  Services: ${JSON.stringify(persona.actorJSON.services)}`;
+          philosophies.textContent = `  --  Philosophies: ${JSON.stringify(persona.actorJSON.philosophies)}`;
+          interactionSchema.textContent = `  --  InteractionSchema: ${JSON.stringify(persona.sharedJSON.interactionSchema)}`;
+      }
+
+      displayPersonaInfo();
+
+      function updatePersonaImage() {
+        clearTimeout(personaImage.timeoutId); // Clear previously scheduled updates
+        const randomIndex = Math.floor(Math.random() * persona.imagesJSON.length);
+        const imageUrl = persona.imagesJSON[randomIndex];
+        personaImage.src = imageUrl;
+        personaImage.timeoutId = setTimeout(updatePersonaImage, 15000); // Change image every 15 seconds
+      }
+
+      personaImage.addEventListener('click', (e) => {
+        e.stopPropagation();
+        updatePersonaImage();
+      });
+
+      updatePersonaImage();
+      
+
+      const SCROLL_SPEED = 0.05; // Pixels per millisecond
+      let lastManualScrollTime = 0;
+      let lastAutoScrollTime = 0;
+
+      var ticker = document.querySelector('.ticker')
+      , list = document.querySelector('.ticker__list')
+      , clone = list.cloneNode(true)
+
+      ticker.append(clone)
+
+
+      let tickerMouseDown = false;
+      let startX;
+
+      function onMouseMove(e) {
+        if (!tickerMouseDown) return;
+        const scrollLeft = ticker.scrollLeft;
+        ticker.scrollLeft = scrollLeft + (startX - e.pageX);
+        startX = e.pageX;
+      }
+
+     ticker.addEventListener('mousedown', (e) => {
+        tickerMouseDown = true;
+        startX = e.pageX;
+        ticker.style.cursor = 'grabbing';
+      });
+
+      function onMouseMove(e) {
+        if (!tickerMouseDown) return;
+        const scrollLeft = ticker.scrollLeft;
+        ticker.scrollLeft = scrollLeft + (startX - e.pageX);
+        startX = e.pageX;
+
+        // Update the lastManualScrollTime to the current time
+        lastManualScrollTime = performance.now();
+      }
+
+      ticker.addEventListener('mouseup', () => {
+        tickerMouseDown = false;
+        ticker.style.cursor = 'grab';
+      });
+
+      ticker.addEventListener('mouseleave', () => {
+        tickerMouseDown = false;
+        ticker.style.cursor = 'grab';
+      });
+
+      window.addEventListener('scroll', handleScroll);
+
+      let scrollPosition = 0;
+
+      function handleScroll() {
+        scrollPosition = window.scrollY;
+      }
+
+      function step() {
+        const timeNow = performance.now();
+        const elapsedTime = timeNow - startTime;
+
+        const scrollFactor = Math.max(0, Math.min(1, scrollPosition / (document.body.scrollHeight - window.innerHeight)));
+
+        const currentDuration = duration * (1 - scrollFactor);
+        const progress = Math.min(1, elapsedTime / currentDuration);
+
+        element.style.transform = `translateX(${startPosition + distance * progress}px)`;
+
+        if (progress < 1) {
+          requestAnimationFrame(step);
+        } else {
+          element.style.transform = `translateX(${startPosition + distance}px)`;
+          setTimeout(() => {
+            startTime = performance.now();
+            requestAnimationFrame(step);
+          }, delay);
+        }
+      }
+
+      function autoScroll() {
+        const currentTime = performance.now();
+
+        if (currentTime - lastManualScrollTime > 2000) {
+          const elapsedTime = currentTime - lastAutoScrollTime;
+          const scrollSpeed = 0.1; // Adjust this value to control the scrolling speed, pixels per miliseconds
+          const scrollAmount = elapsedTime * scrollSpeed;
+          ticker.scrollLeft += scrollAmount;
+
+          resetScrollPositionIfNeeded(); 
+
+          if (ticker.scrollLeft >= list.offsetWidth) {
+            ticker.scrollLeft = 0;
+          }
+        }
+
+        lastAutoScrollTime = currentTime;
+        requestAnimationFrame(autoScroll);
+      }
+
+      function resetScrollPositionIfNeeded() {
+        const maxScrollLeft = ticker.scrollWidth / 1.06;
+        if (ticker.scrollLeft >= maxScrollLeft) {
+          ticker.scrollLeft = 0;
+        }
+      }
+      autoScroll();
+    </script>
+</body>
+</html>

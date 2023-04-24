@@ -1,21 +1,35 @@
 function doGet(e) {
-  // Read the data from the sheet
-  const data = readFromSheet();
+  if (e.parameter.action === "data") {
+    // Read the data from the sheet
+    const data = readFromSheet();
 
-  // Return the data as JSON
-  return ContentService.createTextOutput(JSON.stringify(data)).setMimeType(ContentService.MimeType.JSON);
+    // Return the data as JSON
+    return ContentService.createTextOutput(JSON.stringify(data)).setMimeType(ContentService.MimeType.JSON);
+  } else if (e.parameter.action === "personaTopBar") {
+    const htmlTemplate = HtmlService.createTemplateFromFile('SOMA/UI/Persona.html');
+    return htmlTemplate.evaluate().setTitle('Persona Top Bar');
+  } else {
+    // Handle other cases or return an error
+    return HtmlService.createHtmlOutput("Invalid action.");
+  }
 }
 
 function doPost(e) {
-  // Extract the JSON data from the request
-  const jsonData = JSON.parse(e.postData.contents);
+  if (e.parameter.action === "writeData") {
+    // Extract the JSON data from the request
+    const jsonData = JSON.parse(e.postData.contents);
 
-  // Write the data to the sheet
-  writeToSheet(jsonData);
+    // Write the data to the sheet
+    writeToSheet(jsonData);
 
-  // Return a success message
-  return ContentService.createTextOutput("Data written successfully.");
+    // Return a success message
+    return ContentService.createTextOutput("Data written successfully.");
+  } else {
+    // Handle other cases or return an error
+    return HtmlService.createHtmlOutput("Invalid action.");
+  }
 }
+
 
 function showSidebar() {
   const htmlOutput = HtmlService.createHtmlOutput('AI_Projects_UI.html')
